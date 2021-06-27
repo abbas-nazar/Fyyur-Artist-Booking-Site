@@ -6,6 +6,7 @@ import dateutil.parser
 import babel
 from flask import Flask
 from flask_moment import Moment
+from flask_migrate import Migrate
 
 from controllers import controllers
 from models import db
@@ -19,6 +20,7 @@ app.register_blueprint(controllers)
 moment = Moment(app)
 app.config.from_object('config')
 db.init_app(app)
+migrate = Migrate(app, db)
 
 
 #----------------------------------------------------------------------------#
