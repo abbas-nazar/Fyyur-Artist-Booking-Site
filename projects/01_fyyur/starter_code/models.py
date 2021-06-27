@@ -38,6 +38,7 @@ class Venue(db.Model):
     phone = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
+    seeking_talent = db.Column(db.Boolean)
     statecity_id = db.Column(db.Integer, db.ForeignKey('StateCity.id'))
     shows = db.relationship("Show", back_populates="venue")
 
@@ -50,6 +51,7 @@ class Artist(db.Model):
     genres = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
+    seeking_venue = db.Column(db.Boolean)
     statecity_id = db.Column(db.Integer, db.ForeignKey('StateCity.id'))
     shows = db.relationship("Show", back_populates="artist")
 
