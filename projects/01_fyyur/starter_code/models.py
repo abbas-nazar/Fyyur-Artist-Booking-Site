@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy_utils import aggregated
 
 db = SQLAlchemy()
 
@@ -6,28 +7,10 @@ class StateCity(db.Model):
     __tablename__ = 'StateCity'
 
     id = db.Column(db.Integer, primary_key=True)
+    state = db.Column(db.String(120))
     city = db.Column(db.String(120))
-    venues = db.relationship("Venue", back_populates="state_city")
-    artists = db.relationship("Artist", back_populates="state_city")
-
-
-genre_venue_association_table = db.Table('genre_venues',
-    db.Column('genre_id', db.Integer, db.ForeignKey('Genre.id')),
-    db.Column('venue_id', db.Integer, db.ForeignKey('Venue.id'))
-)
-
-genre_artist_association_table = db.Table('genre_artists',
-    db.Column('genre_id', db.Integer, db.ForeignKey('Genre.id')),
-    db.Column('artist_id', db.Integer, db.ForeignKey('Artist.id'))
-)
-
-class Genre(db.Model):
-    __tablename__ = 'Genre'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120))
-    venues = db.relationship("Venue", secondary=genre_venue_association_table, back_populates="genres")
-    artists = db.relationship("Venue", secondary=genre_artist_association_table, back_populates="genres")
+    venues = db.relationship("Venue", backref=db.backref('venue_state_city', lazy=True))
+    artists = db.relationship("Artist", backref=db.backref('artist_state_city', lazy=True))
 
 class Venue(db.Model):
     __tablename__ = 'Venue'
@@ -36,11 +19,16 @@ class Venue(db.Model):
     name = db.Column(db.String)
     address = db.Column(db.String(120))
     phone = db.Column(db.String(120))
+    genres = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
+    website = db.Column(db.String(120))
     seeking_talent = db.Column(db.Boolean)
+    seeking_description = db.Column(db.String(500))
     statecity_id = db.Column(db.Integer, db.ForeignKey('StateCity.id'))
-    shows = db.relationship("Show", back_populates="venue")
+    state_city = db.relationship("StateCity")
+    shows = db.relationship("Show", backref=db.backref('show_venue', lazy=True))
+
 
 class Artist(db.Model):
     __tablename__ = 'Artist'
@@ -52,8 +40,10 @@ class Artist(db.Model):
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
     seeking_venue = db.Column(db.Boolean)
+    seeking_description = db.Column(db.String(500))
     statecity_id = db.Column(db.Integer, db.ForeignKey('StateCity.id'))
-    shows = db.relationship("Show", back_populates="artist")
+    state_city = db.relationship("StateCity")
+    shows = db.relationship("Show", backref=db.backref('show_artist', lazy=True))
 
 
 class Show(db.Model):
