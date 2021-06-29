@@ -72,11 +72,13 @@ def show_venue(venue_id):
     "seeking_description": venue.seeking_description,
     "image_link": venue.image_link,
     "past_shows": [{
-      "artist_id": 4,
-      "artist_name": "Guns N Petals",
-      "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-      "start_time": "2019-05-21T21:30:00.000Z"
-    }],
+      "venue_id": show.venue_id,
+      "venue_name": show.show_venue.name,
+      "artist_id": show.artist_id,
+      "artist_name": show.show_artist.name,
+      "artist_image_link": show.show_artist.image_link,
+      "start_time": show.start_time.strftime("%Y-%m-%dT%H:%M:%S")
+    } for show in Show.query.filter(Show.venue_id == venue_id, Show.start_time <= datetime.now()).all()],
     "upcoming_shows": [{
       "venue_id": show.venue_id,
       "venue_name": show.show_venue.name,
@@ -133,12 +135,16 @@ def create_venue_submission():
 
 @controllers.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
-  # TODO: Complete this endpoint for taking a venue_id, and using
-  # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
-
-  # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
-  # clicking that button delete it from the db then redirect the user to the homepage
-  return None
+  try:
+    venue = Venue.query.get(venue_id)
+    db.session.delete(venue)
+    db.session.commit()
+    flash('Venue deleted successfully')
+  except:
+    flash('An error occurred while deleting venue.')
+  finally:
+    db.session.close()
+  return render_template('pages/home.html')
 
 #  Artists
 #  ----------------------------------------------------------------
@@ -183,8 +189,7 @@ def show_artist(artist_id):
       "venue_id": show.venue_id,
       "venue_name": show.show_venue.name,
       "artist_id": show.artist_id,
-      "artist_name": show.show_artist.name,
-      "artist_image_link": show.show_artist.image_link,
+      "venue_image_link": show.show_venue.image_link,
       "start_time": show.start_time.strftime("%Y-%m-%dT%H:%M:%S")
     } for show in Show.query.filter(Show.artist_id == artist_id, Show.start_time <= datetime.now()).all()],
     "upcoming_shows": [{
@@ -192,7 +197,7 @@ def show_artist(artist_id):
       "venue_name": show.show_venue.name,
       "artist_id": show.artist_id,
       "artist_name": show.show_artist.name,
-      "artist_image_link": show.show_artist.image_link,
+      "venue_image_link": show.show_venue.image_link,
       "start_time": show.start_time.strftime("%Y-%m-%dT%H:%M:%S")
     } for show in Show.query.filter(Show.artist_id == artist_id, Show.start_time > datetime.now()).all()],
     "past_shows_count": db.session.query(db.func.count(Show.id).label('total')).filter(
