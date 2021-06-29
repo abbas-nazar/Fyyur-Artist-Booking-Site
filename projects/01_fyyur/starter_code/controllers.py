@@ -128,7 +128,7 @@ def create_venue_submission():
     db.session.commit()
     flash('Venue ' + request.form['name'] + ' was successfully listed!')
   except:
-    flash('An error occurred. Venue ' + name + ' could not be listed.')
+    flash('An error occurred. Venue ' + request.form.get('name') + ' could not be listed.')
   finally:
     db.session.close()
   return render_template('pages/home.html')
@@ -211,54 +211,114 @@ def show_artist(artist_id):
 #  ----------------------------------------------------------------
 @controllers.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
-  form = ArtistForm()
+  artist_obj = Artist.query.get(artist_id)
   artist={
-    "id": 4,
-    "name": "Guns N Petals",
-    "genres": ["Rock n Roll"],
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "326-123-5000",
-    "website": "https://www.gunsnpetalsband.com",
-    "facebook_link": "https://www.facebook.com/GunsNPetals",
-    "seeking_venue": True,
-    "seeking_description": "Looking for shows to perform at in the San Francisco Bay Area!",
-    "image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80"
+    "id": artist_id,
+    "name": artist_obj.name,
+    "genres": artist_obj.genres.split(','),
+    "city": artist_obj.state_city.city,
+    "state": artist_obj.state_city.state,
+    "phone": artist_obj.phone,
+    "facebook_link": artist_obj.name,
+    "seeking_venue": artist_obj.seeking_venue,
+    "seeking_description": artist_obj.seeking_description,
+    "image_link": artist_obj.image_link,
   }
-  # TODO: populate form with fields from artist with ID <artist_id>
+  form = ArtistForm(
+    name= artist_obj.name,
+    genres= artist_obj.genres.split(','),
+    city= artist_obj.state_city.city,
+    state= artist_obj.state_city.state,
+    phone= artist_obj.phone,
+    facebook_link= artist_obj.name,
+    seeking_venue= artist_obj.seeking_venue,
+    seeking_description= artist_obj.seeking_description,
+    image_link= artist_obj.image_link)
   return render_template('forms/edit_artist.html', form=form, artist=artist)
 
 @controllers.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
-  # TODO: take values from the form submitted, and update existing
-  # artist record with ID <artist_id> using the new attributes
+  try:
+    artist = Artist.query.get(artist_id)
+    state = request.form.get('state')
+    city = request.form.get('city')
+    state_city = StateCity.query.filter(StateCity.state == state, StateCity.city == city).first()
+    if not state_city:
+      state_city = StateCity(state=state, city=city)
+      db.session.add(state_city)
+    artist.name = request.form.get('name')
+    artist.phone = request.form.get('phone')
+    artist.genres = request.form.get('genres')
+    artist.image_link = request.form.get('image_link')
+    artist.facebook_link = request.form.get('facebook_link')
+    artist.seeking_description = request.form.get('seeking_description')
+    artist.seeking_venue = True if request.form.get('seeking_venue') == 'y' else False
+    artist.state_city = state_city
+    db.session.commit()
+    flash('Artist ' + request.form['name'] + ' was successfully edited!')
+  except:
+    flash('An error occurred. Artist ' + request.form.get('name') + ' could not be edited.')
+  finally:
+    db.session.close()
 
   return redirect(url_for('show_artist', artist_id=artist_id))
 
 @controllers.route('/venues/<int:venue_id>/edit', methods=['GET'])
 def edit_venue(venue_id):
-  form = VenueForm()
-  venue={
-    "id": 1,
-    "name": "The Musical Hop",
-    "genres": ["Jazz", "Reggae", "Swing", "Classical", "Folk"],
-    "address": "1015 Folsom Street",
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "123-123-1234",
-    "website": "https://www.themusicalhop.com",
-    "facebook_link": "https://www.facebook.com/TheMusicalHop",
-    "seeking_talent": True,
-    "seeking_description": "We are on the lookout for a local artist to play every two weeks. Please call us.",
-    "image_link": "https://images.unsplash.com/photo-1543900694-133f37abaaa5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=400&q=60"
-  }
-  # TODO: populate form with values from venue with ID <venue_id>
-  return render_template('forms/edit_venue.html', form=form, venue=venue)
+    venue_obj = Venue.query.get(venue_id)
+    venue= {
+      "id": venue_obj.id,
+      "name": venue_obj.name,
+      "genres": venue_obj.genres.split(','),
+      "address": venue_obj.address,
+      "city": venue_obj.state_city.city,
+      "state": venue_obj.state_city.state,
+      "phone": venue_obj.phone,
+      "website": venue_obj.website,
+      "facebook_link": venue_obj.facebook_link,
+      "seeking_talent": venue_obj.seeking_talent,
+      "seeking_description": venue_obj.seeking_description,
+      "image_link": venue_obj.image_link
+    }
+    form = VenueForm(name=venue_obj.name,
+      genres= venue_obj.genres.split(','),
+      address= venue_obj.address,
+      city= venue_obj.state_city.city,
+      state= venue_obj.state_city.state,
+      phone= venue_obj.phone,
+      facebook_link= venue_obj.facebook_link,
+      seeking_talent= venue_obj.seeking_talent,
+      seeking_description= venue_obj.seeking_description,
+      image_link= venue_obj.image_link, website_link=venue_obj.website)
+    return render_template('forms/edit_venue.html', form=form, venue=venue)
+
 
 @controllers.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
-  # TODO: take values from the form submitted, and update existing
-  # venue record with ID <venue_id> using the new attributes
+  try:
+    venue = Venue.query.get(venue_id)
+    state = request.form.get('state')
+    city = request.form.get('city')
+    state_city = StateCity.query.filter(StateCity.state == state, StateCity.city == city).first()
+    if not state_city:
+      state_city = StateCity(state=state, city=city)
+      db.session.add(state_city)
+    venue.name = request.form.get('name')
+    venue.address = request.form.get('address')
+    venue.phone = request.form.get('phone')
+    venue.genres = request.form.get('genres')
+    venue.image_link = request.form.get('image_link')
+    venue.facebook_link = request.form.get('facebook_link')
+    venue.website = request.form.get('website_link')
+    venue.seeking_talent = True if request.form.get('seeking_talent') == 'y' else False
+    venue.seeking_description = request.form.get('seeking_description')
+    venue.state_city = state_city
+    db.session.commit()
+    flash('Venue ' + request.form['name'] + ' was successfully edited!')
+  except:
+    flash('An error occurred. Venue ' + request.form.get('name') + ' could not be edited.')
+  finally:
+    db.session.close()
   return redirect(url_for('show_venue', venue_id=venue_id))
 
 #  Create Artist
