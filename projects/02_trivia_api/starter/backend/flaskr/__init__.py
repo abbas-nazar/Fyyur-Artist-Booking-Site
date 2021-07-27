@@ -91,16 +91,16 @@ def create_app(test_config=None):
   def delete_question(question_id):
     try:
       question = Question.query.filter(Question.id == question_id).one_or_none()
-
-      if question is None:
-        abort(404)
-
-      question.delete()
-
-      return jsonify({}), 200
-
     except:
       abort(422)
+
+    if question is None:
+      abort(404)
+
+    question.delete()
+
+    return jsonify({}), 200
+
 
   '''
   @TODO: 
@@ -125,7 +125,7 @@ def create_app(test_config=None):
       question = Question(question=question, answer=answer, difficulty=difficulty, category=category)
       question.insert()
 
-      return jsonify({}), 200
+      return jsonify({}), 201
 
     except:
       abort(422)
@@ -168,11 +168,14 @@ def create_app(test_config=None):
     questions = Question.query.filter(Question.category == str(category_id)).order_by(Question.id).all()
     questions = [question.format() for question in questions]
 
-    return jsonify({
-      'questions': questions,
-      'totalQuestions': len(questions),
-      'currentCategory': Category.query.get(category_id).type
-    })
+    if len(questions):
+      return jsonify({
+        'questions': questions,
+        'totalQuestions': len(questions),
+        'currentCategory': Category.query.get(category_id).type
+      })
+
+    abort(404)
 
 
   '''
@@ -190,13 +193,18 @@ def create_app(test_config=None):
   def quizzes():
     body = request.get_json()
     previous_questions = body.get('previous_questions', [])
-    quiz_category = body.get('quiz_category', '')
+    quiz_category = body.get('quiz_category', None)
+    if not quiz_category:
+      abort(400)
+
     category_id = quiz_category.get('id')
     questions = Question.query.filter(~Question.id.in_(previous_questions))
     if not category_id == 0:
         questions = questions.filter(Question.category == str(category_id))
+
     if not questions:
       abort(404)
+
     questions = questions.all()
     question = questions[random.randrange(0, len(questions))]
 
@@ -210,21 +218,96 @@ def create_app(test_config=None):
   including 404 and 422. 
   '''
 
+  @app.errorhandler(400)
+  def bad_request(error):
+    """
+    Error handler for bad request with status code 400.
+    :param: error
+    :return:
+    """
+    return jsonify({
+      'success': False,
+      'error': 400,
+      'message': 'Bad request'
+    }), 400
+
+  @app.errorhandler(401)
+  def unauthorized(error):
+    """
+    Error handler for unauthorized with status code 401.
+    :param: error
+    :return:
+    """
+    return jsonify({
+      'success': False,
+      'error': 401,
+      'message': 'Unauthorized Request'
+    }), 401
+
+  @app.errorhandler(403)
+  def forbidden(error):
+    """
+    Error handler for forbidden with status code 403.
+    :param: error
+    :return:
+    """
+    return jsonify({
+      'success': False,
+      'error': 403,
+      'message': 'Forbidden Request'
+    }), 403
+
   @app.errorhandler(404)
   def not_found(error):
+    """
+    Error handler for not found with status code 404.
+    :param: error
+    :return:
+    """
     return jsonify({
-      "success": False,
-      "error": 404,
-      "message": "Not found"
+      'success': False,
+      'error': 404,
+      'message': 'Not Found'
     }), 404
 
-  @app.errorhandler(422)
-  def unprocessable(error):
+  @app.errorhandler(405)
+  def method_not_allowed(error):
+    """
+    Error handler for method not allowed with status code 405.
+    :param: error
+    :return:
+    """
     return jsonify({
-      "success": False,
-      "error": 422,
-      "message": "unprocessable"
+      'success': False,
+      'error': 405,
+      'message': 'Method Not Allowed'
+    }), 405
+
+  @app.errorhandler(422)
+  def unprocessable_entity(error):
+    """
+    Error handler for unprocessable entity with status code 422.
+    :param: error
+    :return:
+    """
+    return jsonify({
+      'success': False,
+      'error': 422,
+      'message': 'Unprocessable Entity'
     }), 422
+
+  @app.errorhandler(500)
+  def internal_server_error(error):
+    """
+    Error handler for internal server error with status code 500.
+    :param: error
+    :return:
+    """
+    return jsonify({
+      'success': False,
+      'error': 500,
+      'message': 'Internal Server Error'
+    }), 500
 
   return app
 
