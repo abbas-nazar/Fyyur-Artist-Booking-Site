@@ -36,11 +36,6 @@ class TriviaTestCase(unittest.TestCase):
         """Executed after reach test"""
         pass
 
-    """
-    TODO
-    Write at least one test for each test for successful operation and for expected errors.
-    """
-
     def test_categories(self):
         """
         Success test case for get categories route.
@@ -52,7 +47,25 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(len(data['categories']), 6)
 
+    def test_method_not_allowed_categories(self):
+        """
+        Failure test case for get categories route.
+        :return:
+        """
+        res = self.client().post('/categories', json={})
+        json_data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 405)
+        self.assertEqual(json_data.get('success'), False)
+        self.assertEqual(
+            json_data.get('message'), 'Method Not Allowed'
+        )
+
     def test_paginated_questions(self):
+        """
+        Success test case for get paginated questions.
+        :return:
+        """
         res = self.client().get('/questions')
         data = json.loads(res.data)
 
@@ -61,6 +74,20 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(len(data['questions']), 10)
         self.assertTrue(data['totalQuestions'])
         self.assertTrue(data['categories'])
+
+    def test_method_not_paginated_questions(self):
+        """
+        Failure test case for get paginated questions.
+        :return:
+        """
+        res = self.client().put('/questions', json={})
+        json_data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 405)
+        self.assertEqual(json_data.get('success'), False)
+        self.assertEqual(
+            json_data.get('message'), 'Method Not Allowed'
+        )
 
     def test_delete_questions(self):
         res = self.client().delete('/questions/1')
