@@ -1,6 +1,8 @@
 .vscode
+.idea
 __pycache__
 venv
+frontend/node_modules
 
 # OS generated files #
 ######################
