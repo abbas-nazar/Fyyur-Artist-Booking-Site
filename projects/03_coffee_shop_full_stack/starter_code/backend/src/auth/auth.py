@@ -9,18 +9,18 @@ AUTH0_DOMAIN = 'dev-sitffinx.auth0.com'
 ALGORITHMS = ['RS256']
 API_AUDIENCE = 'drinks'
 
-## AuthError Exception
 '''
 AuthError Exception
 A standardized way to communicate auth failure modes
 '''
+
+
 class AuthError(Exception):
     def __init__(self, error, status_code):
         self.error = error
         self.status_code = status_code
 
 
-## Auth Header
 def get_token_auth_header():
     """
     Get token from authorization header and raise error is header is incorrect.
